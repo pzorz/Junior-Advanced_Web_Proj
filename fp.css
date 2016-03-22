@@ -1,0 +1,76 @@
+         body{
+                margin-left: auto;
+                margin-right: auto;
+                background-color: #B0B0B0;
+                }
+	
+		#signUpForm{
+                width: 50%;
+                margin-left: auto;
+                margin-right: auto;
+                margin-bottom: auto;
+                border: 4px solid #00CCFF;
+                background-color: #787878
+                }
+
+                #logInForm{
+                width: 50%;
+                margin-left: auto;
+                margin-right: auto;
+                margin-bottom: auto;
+                border: 4px solid #00CCFF;
+                background-color: #787878
+                }
+		
+		#errors{
+                width: 50%;
+                margin-left: auto;
+                margin-right: auto;
+                margin-bottom: auto;
+                border: 4px solid #19FF19;
+                background-color: #787878
+                }
+		
+
+		#error{
+		color: red;
+		}
+		
+		#taskView{
+                width: 50%;
+                margin-left: auto;
+                margin-right: auto; 
+                margin-bottom: auto;
+                border: 4px solid #00CCFF;
+                background-color: #787878
+                }
+		
+		button{
+		padding-left:auto;
+		margin-left: auto;
+                margin-right: auto;
+		text-align:center;
+		display: block;	
+			
+		}
+			p{
+			color: white;
+			text-align: center;
+			}		
+			h1{
+                        color: white;
+                        text-align: center;
+                        }
+
+                        h2{
+                        color: white;
+                        text-align: center;
+                        }
+                        form{
+                        color:white;
+                        text-align: center;
+                        margin-left: auto;
+                        margin-right: auto;
+                        }
+		
+

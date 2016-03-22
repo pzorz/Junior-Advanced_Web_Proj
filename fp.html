@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html>
+<head>
+	
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
+	<script src="https://code.jquery.com/ui/1.11.4/jquery-ui.js"></script>
+	<script>
+		$(function() {
+    			$( "#datepicker" ).datepicker();
+			$("#datepicker2").datepicker();
+  		});
+	</script>
+	
+	<link rel="stylesheet" href="//code.jquery.com/ui/1.11.4/themes/smoothness/jquery-ui.css">
+	<link rel="stylesheet" type="text/css" href="fp.css">
+	<script>
+
+		// Once the document has loaded, place a listeners for form submissions,
+		// which will invoke the approperate function below.
+		// also listen for other buttons to be clicked
+		// every time the page loads check to see if the user is loged in
+		$(document).ready(function(){
+   			 
+			$('#signUpForm').hide();
+			$('#errors').hide();
+			$('#addTaskForm').hide();
+			$('#taskView').hide();
+			$('#updateTaskView').hide();
+	
+			$('#logOut').on('click', function(event){
+				$('#taskList').html('');
+				$('#taskView').hide();
+				localStorage['email'] = "";
+				$('#taskList').html();
+				$.ajax({
+                                        url:"api/logout",
+                                        success: function(result){
+                                                
+                                          
+                                        }
+                                });
+				$('#logInForm').show();
+                                event.preventDefault();
+                                return false;
+
+			});
+
+			$('#cancle').on('click', function(event){
+				
+				$('#addTaskForm').hide();
+				$('#taskView').show();
+				event.preventDefault();
+				return false;
+			});
+			
+			$('#cancle2').on('click', function(event){
+                                $('#updateTaskView').hide();
+                               
+                                $('#taskView').show();
+                                event.preventDefault();
+                                return false;
+                        });
+
+			$('#add').on('click', function(event){
+				$('#taskView').hide();
+				$('#addTaskForm').show();
+			});
+		
+			$('#toSignUp').on('click', function(event){
+				$('#signUpForm').show();
+				$('#logInForm').hide();
+			});
+
+			$('#toLogIn').on('click', function(event){
+				$('#signUpForm').hide();
+				$('#logInForm').show();
+                        });
+
+			$('#taskList').on('click', '#remove', removeTask);
+			$('#taskList').on('click', '#edit', function(event){
+				localStorage['editID'] = $(this).attr('class');
+				$('#taskView').hide();
+				$('#updateTaskView').show();
+			});
+				
+    			$('#signup').on('submit', signUp);
+			$('#logIn').on('submit', logIn);
+			$('#addTask').on('submit', addATask);
+			$('#updateTask').on('submit', editATask);
+			
+			checkStatus();
+		});
+		
+		//check the status of the user. Are they loged in or not
+		//if they are loged in then display the tasks
+		var checkStatus = function(event){
+			$.ajax({
+				url: "api/check",
+				type: "GET",
+				success: function(result){
+					if(result.info == "logedIn"){
+						$('#logInForm').hide();
+						$('#taskView').show();
+                                                var tasks = result.results;
+                                                for(var i = 0; i < tasks.length; i++) {
+                                                        
+                                                        //dynamicly create all the stuff for the div
+                                                        var button = document.createElement("BUTTON");
+                                                        var text = document.createTextNode("Edit");
+                                                        button.appendChild(text);
+                                                        button.setAttribute("id", "edit");
+                                                        button.setAttribute("class", tasks[i].taskID);
+                                                
+                                                        var compBtn = document.createElement("BUTTON");
+                                                        var compText = document.createTextNode("Complete");
+                                                        compBtn.appendChild(compText);
+                                                        compBtn.setAttribute("class", tasks[i].taskID);
+                                                        compBtn.setAttribute("id", "remove");                                                   
+                
+                                                        var taskName = document.createElement("P");
+                                                        var textName = document.createTextNode(tasks[i].taskName + "  Due: "+ tasks[i].dueDate );
+                                                        taskName.appendChild(textName);
+                                                        
+                                                        document.getElementById("taskList").appendChild(taskName);
+                                                        document.getElementById("taskList").appendChild(button);
+                                                        document.getElementById("taskList").appendChild(compBtn);
+
+                                                }       
+
+						
+					}else{
+						$('#signUpForm').hide();
+                        			$('#errors').hide();
+                        			$('#addTaskForm').hide();
+                        			$('#taskView').hide();
+                        			$('#updateTaskView').hide();
+
+					}
+				}
+			
+			});
+			event.preventDefault();
+			return false;
+		};
+	
+		//the signUp function. Called when a user is signing up 
+		var signUp = function(event){
+			
+			//alert("submiting form");
+			var form = $(this);
+    			var action = form.attr('action');
+    			var method = form.attr('method');
+    
+    			// We will only send data from fields with the class 'keep' specified.
+    			var data = form.find('.keep').serialize();
+
+    			// Send the data to the server.
+    			$.ajax({
+        			url: action,
+        			type: method,
+        			data: data,
+        			success: function(result){
+					if(result.status  == "success"){
+						$('#errors').hide();
+						$('#signUpForm').hide();
+           	 				$('#logInForm').show();
+        				}else{
+						$('#errors').show();
+						$('#error').html(result.info);
+					}
+				}
+    			});
+
+    			event.preventDefault();
+			return false;
+		};
+		
+		//theLogin function. Called when a user loges in to the app
+		var logIn = function(event){
+			var form = $(this);
+			var action = form.attr('action');
+			var method = form.attr('method');
+			
+			var data = form.find('.keep').serialize();
+			 
+			// Check the action URL for place holders (EMAIL).
+                        if(this["url-email"]){
+                                action = action.replace(/EMAIL/g, this["url-email"].value);
+                        }
+			console.log(data);
+			console.log(action);	
+			$.ajax({
+				url: action,
+				type: method,
+				data: data,
+				success: function(result){
+					console.log(result);
+					if(result.status == 'success'){
+						$('#logInForm').hide();
+						$('#errors').hide();
+						localStorage["logedIn"] = "true";
+						localStorage["email"] = result.email;
+						$('#taskView').show();
+						var tasks = result.results;
+						for(var i = 0; i < tasks.length; i++) {
+							
+							//dynamicly create all the stuff for the div
+							var button = document.createElement("BUTTON");
+							var text = document.createTextNode("Edit");
+							button.appendChild(text);
+							button.setAttribute("id", "edit");
+							button.setAttribute("class", tasks[i].taskID);
+						
+							var compBtn = document.createElement("BUTTON");
+							var compText = document.createTextNode("Complete");
+							compBtn.appendChild(compText);
+							compBtn.setAttribute("class", tasks[i].taskID);
+							compBtn.setAttribute("id", "remove");							
+		
+							var taskName = document.createElement("P");
+							var textName = document.createTextNode(tasks[i].taskName + "  Due: "+ tasks[i].dueDate );
+							taskName.appendChild(textName);
+							
+							document.getElementById("taskList").appendChild(taskName);
+							document.getElementById("taskList").appendChild(button);
+							document.getElementById("taskList").appendChild(compBtn);
+
+						}	
+					}else{
+						$('#errors').show();
+						$('#error').html(result.info);
+					}
+				}
+			
+			});
+			
+			event.preventDefault();
+			return false;
+		};
+
+   		//the addATask function. Called when a user is adding a task to their account 
+                var addATask = function(event){
+                        $('#taskList').html('');
+                        $('#taskList').html();
+			                       
+                        var form = $(this);
+                        var action = form.attr('action');
+                        var method = form.attr('method');
+    
+                        // We will only send data from fields with the class 'keep' specified.
+                        var email = localStorage["email"]; 
+			var data = form.find('.keep').serialize() + '&email='+email;
+			console.log(data);
+                        // Send the data to the server.
+                        $.ajax({
+                                url: action,
+                                type: method,
+                                data: data,
+                                success: function(result){
+					console.log(result);
+                                        if(result.status  == "success"){
+                                                $('#errors').hide();
+                                                $('#taskView').show();
+						$('#addTaskForm').hide();
+						var tasks = result.results;
+                                                for(var i = 0; i < tasks.length; i++) {
+                                                        
+                                                        //dynamicly create all the stuff for the div
+                                                        var button = document.createElement("BUTTON");
+                                                        var text = document.createTextNode("Edit");
+                                                        button.appendChild(text);
+                                                        button.setAttribute("id", "edit");
+                                                        button.setAttribute("class", tasks[i].taskID);
+
+                                                
+                                                        var compBtn = document.createElement("BUTTON");
+                                                        var compText = document.createTextNode("Complete");
+                                                        compBtn.appendChild(compText);
+                                                        compBtn.setAttribute("class", tasks[i].taskID);
+                                                        compBtn.setAttribute("id", "remove");                                                   
+                
+                                                        var taskName = document.createElement("P");
+                                                        var textName = document.createTextNode(tasks[i].taskName + "  Due: "+ tasks[i].dueDate );
+                                                        taskName.appendChild(textName);
+                                                        
+                                                        document.getElementById("taskList").appendChild(taskName);
+                                                        document.getElementById("taskList").appendChild(button);
+                                                        document.getElementById("taskList").appendChild(compBtn);
+
+                                                }     
+                                        }else{
+                                                $('#errors').show();
+                                                $('#error').html(result.info);
+                                        }
+                                }
+                        });
+
+                        event.preventDefault();
+                        return false;
+                };
+		
+		//the editATask function. Called when a user wants to edit an existing task
+		var editATask = function(event){
+			$('#taskList').html('');
+			$('#taskList').html();
+                        console.log($(this).attr('class'));
+			
+			var form = $(this);
+                        var action = form.attr('action');
+                        var method = form.attr('method');
+
+			var data = form.find('.keep').serialize() + '&id='+localStorage['editID'] + '&email='+localStorage['email'];
+			console.log(data);
+			$.ajax({
+				url: action,
+				type: method,
+				data: data,
+				success: function(result){
+				
+					console.log(result);
+					if(result.status == "success"){
+					$('#taskView').show();
+                                        $('#updateTaskView').hide();
+
+					var tasks = result.results;
+                                                for(var i = 0; i < tasks.length; i++) {
+                                                        
+                                                        //dynamicly create all the stuff for the div
+                                                        var button = document.createElement("BUTTON");
+                                                        var text = document.createTextNode("Edit");
+                                                        button.appendChild(text);
+                                                        button.setAttribute("id", "edit");
+                                                        button.setAttribute("class", tasks[i].taskID);
+
+                                                
+                                                        var compBtn = document.createElement("BUTTON");
+                                                        var compText = document.createTextNode("Complete");
+                                                        compBtn.appendChild(compText);
+                                                        compBtn.setAttribute("class", tasks[i].taskID);
+                                                        compBtn.setAttribute("id", "remove");                                                   
+                
+                                                        var taskName = document.createElement("P");
+                                                        var textName = document.createTextNode(tasks[i].taskName + "  Due: "+ tasks[i].dueDate );
+                                                        taskName.appendChild(textName);
+                                                        
+                                                        document.getElementById("taskList").appendChild(taskName);
+                                                        document.getElementById("taskList").appendChild(button);
+                                                        document.getElementById("taskList").appendChild(compBtn);
+
+                                                }
+					}else {
+						$('#errors').show();
+                                                $('#error').html(result.info);
+					}
+				}
+			});
+			event.preventDefault();
+                        return false;
+
+                };
+		
+		//the removeTask function. Called when a task is compleated and needs to be removed
+		var removeTask = function(event){
+                        $('#taskList').html('');
+                        $('#taskList').html();
+                        
+                        var data = {id:$(this).attr('class'), email:localStorage["email"]};
+                        console.log(data);
+                        $.ajax({
+                                url: "api/remove",
+                                type: "DELETE",
+                                data: data,
+                                success: function(result){
+                                        console.log(result);
+                                        var tasks = result.results;
+                                                for(var i = 0; i < tasks.length; i++) {
+                                                        
+                                                        //dynamicly create all the stuff for the div
+                                                        var button = document.createElement("BUTTON");
+                                                        var text = document.createTextNode("Edit");
+                                                        button.appendChild(text);
+                                                        button.setAttribute("id", "edit");
+                                                        button.setAttribute("class", tasks[i].taskID);
+
+                                                
+                                                        var compBtn = document.createElement("BUTTON");
+                                                        var compText = document.createTextNode("Complete");
+                                                        compBtn.appendChild(compText);
+                                                        compBtn.setAttribute("class", tasks[i].taskID);
+                                                        compBtn.setAttribute("id", "remove");                                                   
+                
+                                                        var taskName = document.createElement("P");
+                                                        var textName = document.createTextNode(tasks[i].taskName + "  Due: "+ tasks[i].dueDate );
+                                                        taskName.appendChild(textName);
+                                                        
+                                                        document.getElementById("taskList").appendChild(taskName);
+                                                        document.getElementById("taskList").appendChild(button);
+                                                        document.getElementById("taskList").appendChild(compBtn);
+
+                                                }       
+
+                                }
+                        });
+                        event.preventDefault();
+                        return false;
+
+                };
+
+
+	</script>
+</head>
+<body>
+
+
+<h1>Task Master</h1>
+<div id="errors">
+	<p id="error"></p>
+</div>
+
+<!-- Sign Up view-->
+<div id="signUpForm">
+	<h2>Sign Up for  an account</h2>
+	<form method="POST" action="api/signup" id="signup">
+    	Email: <input type="text" name="email" class="keep"/><br/>
+   	Name: <input type="text" name="name" class="keep"/> <br/>
+    	Password: <input type="password" name="password" class="keep"/><br/>
+    	<input type="submit"/>
+	</form>
+	</br>
+	<p>Already a member? <button id="toLogIn">Log In Now</button></p>
+</div>
+
+<!-- Log In View -->
+<div id="logInForm">
+	<h2>Log In</h2>
+	<form method="GET" action="api/logIn/EMAIL/" id="logIn">
+    	Email: <input type="text" name="url-email"/><br/>
+	Password: <input type="password" name="password" class="keep"/></br>
+    	<input type="submit" value="Log In"/>
+	</form>
+	</br>
+	<p>Not a member yet? <button id="toSignUp"> Sign Up Now</button></p>
+</div>
+
+<!-- Display Tasks -->
+<div id="taskView">
+	<h2>Your Tasks</h2>
+	<div id="taskList">
+	</div>
+	</br>
+	<button id="add">Add Task</button>
+	<button id="logOut">Log Out</button>
+</div>
+
+<!-- Add Task View -->
+<div id="addTaskForm">
+	<h2>Add A New Task</h2>
+	<form method="POST" action="api/addTask" id="addTask">
+		Task Name: <input type="text" name="taskName" class="keep"/></br>
+		Due Date: <input id="datepicker" type="text" name="dueDate" class="keep"/></br>
+		Email preference:<select name="preferenceDropDown" class="keep">
+			<option value="email">Email me a day before this is due</option>
+			<option value="n/a">Do not email me reminders</option>
+		</select>
+		</br>
+		<button id="cancle">cancle</button>
+		<input type="submit"/> 
+	</form>
+</div>
+
+<!-- Update task view -->
+<div id="updateTaskView">
+	<h2>Update Task</h2>
+	<form method="PUT" action="api/updateTask" id="updateTask">
+                Task Name: <input type="text" name="taskName" class="keep"/></br>
+                Due Date: <input id="datepicker2" type="text" name="dueDate" class="keep"/></br>
+                Email preference:<select name="preferenceDropDown" class="keep">
+                        <option value="email">Email me a day before this is due</option>
+                        <option value="n/a">Do not email me reminders</option>
+                </select>
+                </br>
+                <button id="cancle2">cancle</button>
+                <input type="submit"/>
+        </form>
+
+</div>
+
+
+</body>
+</html>
